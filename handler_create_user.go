@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Sleeper21/http-server/internal/auth"
+	"github.com/Sleeper21/http-server/internal/database"
 	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	type body struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	data := json.NewDecoder(r.Body)
@@ -23,27 +26,43 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if dataJSON.Email == "" {
-		log.Printf("email cannot be empty")
+		log.Println("email cannot be empty")
+		return
+	}
+	if dataJSON.Password == "" {
+		log.Println("password cannot be empty")
+	}
+
+	//Hash password before storing
+	hashedPassword, err := auth.HashPassword(dataJSON.Password)
+	if err != nil {
+		log.Printf("error hashing password: %s", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// db query to add create user
-	user, err := cfg.dbQueries.CreateUser(r.Context(), dataJSON.Email)
+	// db query to create user
+	userToSave := database.CreateUserParams{
+		Email:          dataJSON.Email,
+		HashedPassword: hashedPassword,
+	}
+
+	user, err := cfg.dbQueries.CreateUser(r.Context(), userToSave)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		log.Printf("error creating the user: %s", err)
 		return
 	}
-
 	// parse the returned user to JSON and send it in response writer
-	type userStruct struct {
+	// excluding the hashed password
+	type responseFields struct {
 		ID        uuid.UUID `json:"id"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 		Email     string    `json:"email"`
 	}
 
-	newUser := userStruct{
+	newUser := responseFields{
 		user.ID,
 		user.CreatedAt,
 		user.UpdatedAt,
