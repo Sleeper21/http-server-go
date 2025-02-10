@@ -12,7 +12,7 @@ func generateErrorJson(w http.ResponseWriter, code int, msg string, err error) {
 	}
 
 	if code > 499 {
-		log.Printf("Responding with %v error: %s", code, msg)
+		log.Printf("Responding with %v error: %s\n", code, msg)
 	}
 
 	type errorJson struct {

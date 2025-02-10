@@ -7,13 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Sleeper21/http-server/internal/auth"
 	"github.com/Sleeper21/http-server/internal/database"
 	"github.com/google/uuid"
 )
 
 type parameters struct {
-	Body   string    `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
+	Body string `json:"body"`
 }
 
 type chirp struct {
@@ -26,10 +26,26 @@ type chirp struct {
 
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 
-	const maxLength = 140
+	// Validate user authorization
+	// Get bearer token in the request header
+	reqToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		log.Printf("error getting the bearer token: %s", err)
+		return
+	}
 
+	// check if its a valid signed JWT token for this user
+	validatedUserID, err := auth.ValidateJWT(reqToken, cfg.secret)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		log.Printf("error validating the JWT token: %s", err)
+		return
+	}
+
+	const maxLength = 140
 	params := parameters{}
-	err := json.NewDecoder(r.Body).Decode(&params)
+	err = json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
 		log.Printf("error decoding parameters: %s", err)
 		w.WriteHeader(http.StatusInternalServerError) // --> 500
@@ -40,14 +56,6 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		generateErrorJson(w, http.StatusBadRequest, "Chirp is too long", nil)
 		return
 	}
-	// Check if user exists
-	user, err := cfg.dbQueries.GetUserByID(r.Context(), params.UserID)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		w.Write([]byte("user not found"))
-		log.Printf("user not found: %s", err)
-		return
-	}
 
 	// Censor profane words
 	filteredMsg := hideProfaneWords(params.Body)
@@ -55,7 +63,7 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 	// Create chirp
 	returnedChirp, err := cfg.dbQueries.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body:   filteredMsg,
-		UserID: user.ID,
+		UserID: validatedUserID,
 	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
