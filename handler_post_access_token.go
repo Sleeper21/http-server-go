@@ -17,10 +17,10 @@ import (
 
 /*
 Each user has a refresh token stored in the database
-this refresh endpoint will check the refresh token, if valid the respective user will receive a new access-token valid for one hour.
+this endpoint will check the refresh token, if valid the respective user will receive a new access-token valid for one hour.
 */
 
-func (cfg *apiConfig) handlerRefreshAccessToken(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerResetAccessToken(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the refresh token sent in the header is valid for this user
 	refToken, err := auth.GetBearerToken(r.Header)

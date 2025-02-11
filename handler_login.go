@@ -83,7 +83,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	err = cfg.dbQueries.CreateRefreshToken(r.Context(), database.CreateRefreshTokenParams{
 		Token:     refreshToken,
 		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(RefreshTokenExpiration),
+		ExpiresAt: time.Now().UTC().Add(RefreshTokenExpiration),
 	})
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

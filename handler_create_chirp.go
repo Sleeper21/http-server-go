@@ -27,7 +27,7 @@ type chirp struct {
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 
 	// Validate user authorization
-	// Get bearer token in the request header
+	// Get jwt access bearer token in the request header
 	reqToken, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)

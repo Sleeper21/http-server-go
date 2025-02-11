@@ -11,14 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type BodyUserCredentials struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	type body struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
 
 	data := json.NewDecoder(r.Body)
-	dataJSON := body{}
+	dataJSON := BodyUserCredentials{}
 	err := data.Decode(&dataJSON)
 	if err != nil {
 		log.Printf("error decoding the data: %s", err)

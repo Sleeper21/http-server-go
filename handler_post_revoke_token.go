@@ -10,6 +10,7 @@ import (
 )
 
 /*
+This endpoint resets the user's refresh token and stores it in the db
 This new endpoint does not accept a request body, but does require a refresh token to be present in the headers, in the same Authorization: Bearer <token> format.
 */
 
