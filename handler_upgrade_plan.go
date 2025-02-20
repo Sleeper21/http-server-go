@@ -2,15 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
+	"github.com/Sleeper21/http-server/internal/auth"
 	"github.com/google/uuid"
 )
 
 /*
 
 The endpoint will upgrade the user "is_chirpy_red" plan.
-The endpoint should accept a request of this shape:
+The endpoint should accept a request body of this shape:
 		{
 		  "event": "user.upgraded",
 		  "data": {
@@ -24,6 +26,8 @@ The endpoint should accept a request of this shape:
 
 - If the user is upgraded successfully, the endpoint should respond with a 204 status code and an empty response body. If the user can’t be found, the endpoint should respond with a 404 status code.
 
+Also the request should contain a valid api key in the header
+
 */
 
 type WebHookRequest struct {
@@ -36,6 +40,19 @@ type WebHookRequest struct {
 type resEmptyBody struct{}
 
 func (cfg *apiConfig) handlerUpgradeUserPlan(w http.ResponseWriter, r *http.Request) {
+
+	// Validate apiKey sent in the header
+	headers := r.Header
+	apiKey, err := auth.GetApiKey(headers)
+	if err != nil {
+		generateErrorJson(w, 401, "error getting api Key", err)
+		return
+	}
+
+	if !(apiKey == cfg.polkaKey) {
+		generateErrorJson(w, 401, "invalid api key", errors.New("unauthorized"))
+		return
+	}
 
 	// Decode body to struct
 	req := WebHookRequest{}

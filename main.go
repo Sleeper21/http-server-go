@@ -18,6 +18,7 @@ type apiConfig struct {
 	dbQueries      *database.Queries
 	platform       string
 	secret         string
+	polkaKey       string
 }
 
 func main() {
@@ -36,6 +37,10 @@ func main() {
 	if secret == "" {
 		log.Fatal("SECRET must be set")
 	}
+	polkaKey := os.Getenv("POLKA_KEY")
+	if polkaKey == "" {
+		log.Fatal("Polka Key must be set")
+	}
 
 	// Open connection to database
 	db, err := sql.Open("postgres", dbURL)
@@ -52,6 +57,7 @@ func main() {
 		dbQueries:      dbQueries,
 		platform:       os.Getenv("PLATFORM"), // if platform != "dev" restrict dangerous endpoints
 		secret:         os.Getenv("SECRET"),
+		polkaKey:       os.Getenv("POLKA_KEY"),
 	}
 
 	// Create a new http.ServeMux
