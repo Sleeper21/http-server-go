@@ -57,10 +57,11 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 	// parse the returned user to JSON and send it in response writer
 	// excluding the hashed password
 	type responseFields struct {
-		ID        uuid.UUID `json:"id"`
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-		Email     string    `json:"email"`
+		ID          uuid.UUID `json:"id"`
+		CreatedAt   time.Time `json:"created_at"`
+		UpdatedAt   time.Time `json:"updated_at"`
+		Email       string    `json:"email"`
+		IsChirpyRed bool      `json:"is_chirpy_red"`
 	}
 
 	newUser := responseFields{
@@ -68,6 +69,7 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		user.CreatedAt,
 		user.UpdatedAt,
 		user.Email,
+		user.IsChirpyRed,
 	}
 
 	respondWithJson(w, http.StatusCreated, newUser)

@@ -14,20 +14,21 @@ import (
 )
 
 const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
-SELECT users.email, refresh_tokens.token, refresh_tokens.created_at, refresh_tokens.updated_at, refresh_tokens.user_id, refresh_tokens.expires_at, refresh_tokens.revoked_at
+SELECT users.email, is_chirpy_red, refresh_tokens.token, refresh_tokens.created_at, refresh_tokens.updated_at, refresh_tokens.user_id, refresh_tokens.expires_at, refresh_tokens.revoked_at
 FROM users
 JOIN refresh_tokens ON users.id = refresh_tokens.user_id
 WHERE refresh_tokens.token = $1
 `
 
 type GetUserFromRefreshTokenRow struct {
-	Email     string
-	Token     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	UserID    uuid.UUID
-	ExpiresAt time.Time
-	RevokedAt sql.NullTime
+	Email       string
+	IsChirpyRed bool
+	Token       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	UserID      uuid.UUID
+	ExpiresAt   time.Time
+	RevokedAt   sql.NullTime
 }
 
 func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (GetUserFromRefreshTokenRow, error) {
@@ -35,6 +36,7 @@ func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (Ge
 	var i GetUserFromRefreshTokenRow
 	err := row.Scan(
 		&i.Email,
+		&i.IsChirpyRed,
 		&i.Token,
 		&i.CreatedAt,
 		&i.UpdatedAt,
