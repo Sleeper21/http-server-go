@@ -18,7 +18,7 @@ type Chirp struct {
 
 func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 
-	strID := r.PathValue("chirpID") // --> will return e string "12eae124-2345235-5235"
+	strID := r.PathValue("chirpID") // --> will return string "12eae124-2345235-5235"
 
 	// Convert id (string) to a uuid.UUID to match the db struct
 	id, err := uuid.Parse(strID)
@@ -50,6 +50,35 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 
 // Get all chirps
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
+
+	// Check if optional query param with author id was provided
+	stringID := r.URL.Query().Get("author_id") // --> returns a string id if existent
+	if stringID != "" {
+		// Covert id string into uuid.UUID to match the db struct
+		userID, err := uuid.Parse(stringID)
+		if err != nil {
+			generateErrorJson(w, http.StatusBadRequest, "invalid id format", err)
+			return
+		}
+
+		// Check if its a valid user id
+		user, err := cfg.dbQueries.GetUserByID(r.Context(), userID)
+		if err != nil {
+			generateErrorJson(w, http.StatusNotFound, "user not found", err)
+			return
+		}
+
+		// Get all chirps from that user
+		chirps, err := cfg.dbQueries.GetChirpsByUserID(r.Context(), user.ID)
+		if err != nil {
+			generateErrorJson(w, http.StatusInternalServerError, "couldn't retrieve any chirp from user", err)
+			return
+		}
+
+		// return User's chirps
+		respondWithJson(w, 200, chirps)
+		return
+	}
 
 	allChirps, err := cfg.dbQueries.GetAllChirps(r.Context())
 	if err != nil {
